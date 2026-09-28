@@ -1,0 +1,71 @@
+# GateKeeperBot
+
+Telegram グループへ参加したユーザーを Google スプレッドシートのブラックリストと照合し、一致すれば除外する polling 型の管理 Bot です。Python 3.12 以降を対象にしています。
+
+## セットアップ
+
+1. Python 3.12 以降で仮想環境を作成し、依存関係を入れます。
+
+   ```bash
+   python3.12 -m venv .venv
+   . .venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. `config.example.yaml` を `config.yaml` にコピーして、Bot Token・スプレッドシート URL・サービスアカウント JSON のパスを設定します。`config.yaml` と認証 JSON は Git の対象外です。
+
+3. Google Cloud で Sheets API を有効化したサービスアカウントを作成し、そのサービスアカウントのメールアドレスに対象スプレッドシートの閲覧者権限を付与します。
+
+4. `blacklist` ワークシートの 1 行目を、必ず次のヘッダーにします。
+
+   | username | display_name | enabled | note |
+   | --- | --- | --- | --- |
+   | @example_user |  | TRUE | spam account |
+   |  | Example User | TRUE | trouble user |
+
+   `enabled` が `TRUE` の行だけが有効です。username と display_name は OR 条件で、いずれかの完全一致で対象になります。
+
+5. Bot を対象グループの管理者にし、**ユーザーを禁止（BAN）する権限**を付与します。プライバシーモードを無効化すると、参加イベントを確実に受け取れます。
+
+6. 起動します。
+
+   ```bash
+   python main.py --config config.yaml
+   ```
+
+## 管理コマンド
+
+グループ管理者だけが使用できます。
+
+- `/blacklist_reload` — スプレッドシートを直ちに再取得します。
+- `/blacklist_status` — 件数と最終正常更新時刻を表示します。
+
+## 運用上の仕様
+
+- 起動時に読み込み、以後 `blacklist.refresh_interval` 秒ごとに更新します（既定 60 秒）。取得に失敗しても最後の正常キャッシュを使い続けます。
+- `telegram.action: ban` は再参加も防ぎます。`kick` は BAN 後ただちに unban し、再参加を許可します。`kick` の unban API 呼び出しに失敗した場合は安全側に倒れ、対象者は BAN 状態のままになり、エラーが記録されます。
+- username は `@`・大小文字・前後空白を無視します。表示名は連続空白を半角 1 文字へ正規化して大小文字を区別せず、部分一致はしません。
+- GateKeeperBot 自身は対象外です。他の Bot アカウントは通常ユーザーとして照合します。管理者は Telegram API 上 ban 不可のため検出時にログを残してスキップします。
+
+## systemd の例
+
+`/etc/systemd/system/gatekeeperbot.service`:
+
+```ini
+[Unit]
+Description=GateKeeperBot
+After=network-online.target
+
+[Service]
+Type=simple
+User=gatekeeper
+WorkingDirectory=/opt/gatekeeperbot
+ExecStart=/opt/gatekeeperbot/.venv/bin/python /opt/gatekeeperbot/main.py --config /opt/gatekeeperbot/config.yaml
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+反映後に `sudo systemctl daemon-reload`、`sudo systemctl enable --now gatekeeperbot` を実行してください。

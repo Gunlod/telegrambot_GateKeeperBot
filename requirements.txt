@@ -1,0 +1,4 @@
+python-telegram-bot[job-queue]==22.8
+gspread>=6.0,<7.0
+google-auth>=2.0,<3.0
+PyYAML>=6.0,<7.0

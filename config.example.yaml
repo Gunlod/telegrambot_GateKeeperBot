@@ -1,0 +1,21 @@
+# Copy this file to config.yaml and fill in the values. Do not commit config.yaml.
+telegram:
+  bot_token: "PUT_YOUR_TELEGRAM_BOT_TOKEN_HERE"
+  # ban: remove and prevent rejoining; kick: ban then immediately unban.
+  action: "ban"
+
+google:
+  spreadsheet_url: "https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit"
+  worksheet_name: "blacklist"
+  credentials_file: "./credentials/google-service-account.json"
+
+blacklist:
+  # Seconds. The spreadsheet is also loaded once at startup.
+  refresh_interval: 60
+
+logging:
+  level: "INFO"
+  file: "./logs/gatekeeper.log"
+  # Rotating log settings (bytes / number of old files retained).
+  max_bytes: 5242880
+  backup_count: 5
