@@ -17,6 +17,7 @@ class TelegramConfig:
 class GoogleConfig:
     spreadsheet_url: str
     worksheet_name: str
+    join_log_worksheet_name: str
     credentials_file: Path
 
 
@@ -77,6 +78,9 @@ def load_config(path: str | Path) -> AppConfig:
     backup_count = int(logging.get("backup_count", 5))
     if max_bytes <= 0 or backup_count < 0:
         raise ValueError("logging.max_bytes must be > 0 and backup_count must be >= 0")
+    join_log_worksheet_name = google.get("join_log_worksheet_name", "join_log")
+    if not isinstance(join_log_worksheet_name, str) or not join_log_worksheet_name.strip():
+        raise ValueError("google.join_log_worksheet_name must be a non-empty string")
 
     return AppConfig(
         telegram=TelegramConfig(
@@ -86,6 +90,7 @@ def load_config(path: str | Path) -> AppConfig:
         google=GoogleConfig(
             spreadsheet_url=_required_string(google, "spreadsheet_url", "google"),
             worksheet_name=_required_string(google, "worksheet_name", "google"),
+            join_log_worksheet_name=join_log_worksheet_name.strip(),
             credentials_file=Path(_required_string(google, "credentials_file", "google")),
         ),
         blacklist=BlacklistConfig(refresh_interval=interval),

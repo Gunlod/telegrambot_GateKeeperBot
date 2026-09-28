@@ -13,7 +13,9 @@ from google.oauth2.service_account import Credentials
 from .config import GoogleConfig
 
 LOGGER = logging.getLogger(__name__)
-SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets.readonly"
+# Join logging appends rows to the same spreadsheet, so the service account needs
+# the regular Sheets scope (and Editor access to the spreadsheet).
+SHEETS_SCOPE = "https://www.googleapis.com/auth/spreadsheets"
 
 
 def normalize_username(value: object) -> str:

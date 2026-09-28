@@ -22,7 +22,7 @@ class BlacklistNormalizationTests(unittest.TestCase):
         self.assertEqual(display_name("Example", None), "Example")
 
     def test_matching_is_exact_and_uses_or_condition(self) -> None:
-        store = BlacklistStore(GoogleConfig("url", "blacklist", "credentials.json"))
+        store = BlacklistStore(GoogleConfig("url", "blacklist", "join_log", "credentials.json"))
         store._snapshot = BlacklistSnapshot(
             usernames=frozenset({"exampleuser"}),
             display_names=frozenset({"yamada"}),

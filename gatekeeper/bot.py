@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -12,6 +11,7 @@ from telegram.ext import Application, ApplicationBuilder, CommandHandler, Contex
 
 from .blacklist import BlacklistStore, display_name
 from .config import AppConfig
+from .join_log import JoinLogEntry, JoinLogStore
 
 LOGGER = logging.getLogger(__name__)
 
@@ -68,7 +68,10 @@ async def handle_new_members(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
 
     store: BlacklistStore = context.application.bot_data["blacklist_store"]
+    join_log: JoinLogStore = context.application.bot_data["join_log_store"]
     action: str = context.application.bot_data["action"]
+    joined_at = message.date
+    join_log_entries: list[JoinLogEntry] = []
     for member in message.new_chat_members:
         if member.id == context.bot.id:
             LOGGER.info("Skipping GateKeeperBot's own join event user_id=%d", member.id)
@@ -84,6 +87,19 @@ async def handle_new_members(update: Update, context: ContextTypes.DEFAULT_TYPE)
         )
         # Read this explicitly: other bot accounts are intentionally checked too.
         LOGGER.debug("JOIN ACCOUNT user_id=%d is_bot=%s", member.id, member.is_bot)
+        join_log_entries.append(
+            JoinLogEntry(username=username, display_name=name, joined_at=joined_at)
+        )
+
+    # Persist the event before enforcing the blacklist. One multi-user join event
+    # becomes one Sheets append request; a write failure is deliberately non-fatal.
+    await join_log.append(join_log_entries)
+
+    for member in message.new_chat_members:
+        if member.id == context.bot.id:
+            continue
+        username = _username_for_log(member.username)
+        name = display_name(member.first_name, member.last_name)
         matched = store.match(member.username, name)
         if not matched:
             continue
@@ -179,6 +195,7 @@ async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> N
 
 def build_application(config: AppConfig) -> Application:
     store = BlacklistStore(config.google)
+    join_log = JoinLogStore(config.google)
     application = (
         ApplicationBuilder()
         .token(config.telegram.bot_token)
@@ -186,6 +203,7 @@ def build_application(config: AppConfig) -> Application:
         .build()
     )
     application.bot_data["blacklist_store"] = store
+    application.bot_data["join_log_store"] = join_log
     application.bot_data["action"] = config.telegram.action
     application.bot_data["refresh_interval"] = config.blacklist.refresh_interval
     group_filter = filters.ChatType.GROUPS

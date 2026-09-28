@@ -7,6 +7,8 @@ telegram:
 google:
   spreadsheet_url: "https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit"
   worksheet_name: "blacklist"
+  # A separate worksheet in the same spreadsheet. Each joined user is appended here.
+  join_log_worksheet_name: "join_log"
   credentials_file: "./credentials/google-service-account.json"
 
 blacklist:
