@@ -31,7 +31,7 @@ Telegram グループへ参加したユーザーを Google スプレッドシー
    | username | display_name | numeric_id | joined_at |
    | --- | --- | --- | --- |
 
-   自分自身を除く参加者ごとに、`@Gunlod` のような Telegram username、表示名、numeric ID、参加イベント時刻を UTC の ISO 8601 形式で追記します。username 未設定のユーザーは username 列を空欄にします。他 Bot も記録対象です。既存の 3 列ログシートは、次の書き込み時に numeric_id 列を自動追加します。ログ用シートへの書き込みが失敗しても、ブラックリスト照合・BAN 処理は継続します。
+   自分自身を除く参加者ごとに、`@Gunlod` のような Telegram username、表示名、numeric ID、参加イベント時刻を JST（`+09:00`）の ISO 8601 形式で追記します。username 未設定のユーザーは username 列を空欄にします。他 Bot も記録対象です。既存の 3 列ログシートは、次の書き込み時に numeric_id 列を自動追加します。ログ用シートへの書き込みが失敗しても、ブラックリスト照合・BAN 処理は継続します。
 
 5. Bot を対象グループの管理者にし、**ユーザーを禁止（BAN）する権限**を付与します。プライバシーモードを無効化すると、参加イベントを確実に受け取れます。
 

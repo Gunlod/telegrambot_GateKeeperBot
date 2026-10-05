@@ -3,8 +3,9 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Iterable
+from zoneinfo import ZoneInfo
 
 import gspread
 from gspread.exceptions import WorksheetNotFound
@@ -16,6 +17,7 @@ from .config import GoogleConfig
 LOGGER = logging.getLogger(__name__)
 JOIN_LOG_HEADERS = ["username", "display_name", "numeric_id", "joined_at"]
 LEGACY_JOIN_LOG_HEADERS = ["username", "display_name", "joined_at"]
+JST = ZoneInfo("Asia/Tokyo")
 
 
 @dataclass(frozen=True)
@@ -26,8 +28,8 @@ class JoinLogEntry:
     joined_at: datetime
 
     def values(self) -> list[str]:
-        # ISO 8601 in UTC is sortable and unambiguous when viewed in Sheets.
-        timestamp = self.joined_at.astimezone(timezone.utc).isoformat(timespec="seconds")
+        # Keep the offset in the ISO 8601 value so JST is explicit in Sheets.
+        timestamp = self.joined_at.astimezone(JST).isoformat(timespec="seconds")
         return [self.username or "", self.display_name, str(self.numeric_id), timestamp]
 
 
