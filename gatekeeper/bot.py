@@ -93,7 +93,7 @@ async def handle_new_members(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     # Persist the event before enforcing the blacklist. One multi-user join event
     # becomes one Sheets append request; a write failure is deliberately non-fatal.
-    await join_log.append(join_log_entries)
+    await join_log.append(chat.id, join_log_entries)
 
     for member in message.new_chat_members:
         if member.id == context.bot.id:

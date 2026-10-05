@@ -2,6 +2,8 @@ import unittest
 from datetime import datetime, timezone
 
 from gatekeeper.join_log import JoinLogEntry
+from gatekeeper.join_log import JoinLogStore
+from gatekeeper.config import GoogleConfig
 
 
 class JoinLogEntryTests(unittest.TestCase):
@@ -15,6 +17,10 @@ class JoinLogEntryTests(unittest.TestCase):
             entry.values(),
             ["@Gunlod", "Example User", "2026-09-28T12:34:56+00:00"],
         )
+
+    def test_worksheet_title_is_unique_per_group(self) -> None:
+        store = JoinLogStore(GoogleConfig("url", "blacklist", "join_log", "credentials.json"))
+        self.assertEqual(store.worksheet_title(-1001234567890), "join_log_-1001234567890")
 
 
 if __name__ == "__main__":

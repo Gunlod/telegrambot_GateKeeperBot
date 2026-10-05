@@ -17,7 +17,7 @@ class TelegramConfig:
 class GoogleConfig:
     spreadsheet_url: str
     worksheet_name: str
-    join_log_worksheet_name: str
+    join_log_worksheet_prefix: str
     credentials_file: Path
 
 
@@ -78,9 +78,19 @@ def load_config(path: str | Path) -> AppConfig:
     backup_count = int(logging.get("backup_count", 5))
     if max_bytes <= 0 or backup_count < 0:
         raise ValueError("logging.max_bytes must be > 0 and backup_count must be >= 0")
-    join_log_worksheet_name = google.get("join_log_worksheet_name", "join_log")
-    if not isinstance(join_log_worksheet_name, str) or not join_log_worksheet_name.strip():
-        raise ValueError("google.join_log_worksheet_name must be a non-empty string")
+    # The old key is accepted so existing config.yaml files continue to work.
+    join_log_worksheet_prefix = google.get(
+        "join_log_worksheet_prefix", google.get("join_log_worksheet_name", "join_log")
+    )
+    if not isinstance(join_log_worksheet_prefix, str) or not join_log_worksheet_prefix.strip():
+        raise ValueError("google.join_log_worksheet_prefix must be a non-empty string")
+    join_log_worksheet_prefix = join_log_worksheet_prefix.strip()
+    if len(join_log_worksheet_prefix) > 75 or any(
+        character in join_log_worksheet_prefix for character in "[]:*?/\\"
+    ):
+        raise ValueError(
+            "google.join_log_worksheet_prefix is invalid for a Google Sheets worksheet name"
+        )
 
     return AppConfig(
         telegram=TelegramConfig(
@@ -90,7 +100,7 @@ def load_config(path: str | Path) -> AppConfig:
         google=GoogleConfig(
             spreadsheet_url=_required_string(google, "spreadsheet_url", "google"),
             worksheet_name=_required_string(google, "worksheet_name", "google"),
-            join_log_worksheet_name=join_log_worksheet_name.strip(),
+            join_log_worksheet_prefix=join_log_worksheet_prefix,
             credentials_file=Path(_required_string(google, "credentials_file", "google")),
         ),
         blacklist=BlacklistConfig(refresh_interval=interval),

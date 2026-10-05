@@ -25,7 +25,7 @@ Telegram グループへ参加したユーザーを Google スプレッドシー
 
    `enabled` が `TRUE` の行だけが有効です。username と display_name は OR 条件で、いずれかの完全一致で対象になります。
 
-   同じスプレッドシートに `join_log` シートも作成し、1 行目を次のヘッダーにします。シート名は `google.join_log_worksheet_name` で変更できます。
+   入室ログ用シートは Bot がグループごとに自動作成します。シート名は既定で `join_log_<chat_id>` となり、接頭辞は `google.join_log_worksheet_prefix` で変更できます。各自動作成シートの 1 行目は次のヘッダーです。
 
    | username | display_name | joined_at |
    | --- | --- | --- |
