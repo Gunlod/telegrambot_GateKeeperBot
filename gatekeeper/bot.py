@@ -88,7 +88,12 @@ async def handle_new_members(update: Update, context: ContextTypes.DEFAULT_TYPE)
         # Read this explicitly: other bot accounts are intentionally checked too.
         LOGGER.debug("JOIN ACCOUNT user_id=%d is_bot=%s", member.id, member.is_bot)
         join_log_entries.append(
-            JoinLogEntry(username=username, display_name=name, joined_at=joined_at)
+            JoinLogEntry(
+                username=username,
+                display_name=name,
+                numeric_id=member.id,
+                joined_at=joined_at,
+            )
         )
 
     # Persist the event before enforcing the blacklist. One multi-user join event
@@ -100,7 +105,7 @@ async def handle_new_members(update: Update, context: ContextTypes.DEFAULT_TYPE)
             continue
         username = _username_for_log(member.username)
         name = display_name(member.first_name, member.last_name)
-        matched = store.match(member.username, name)
+        matched = store.match(member.username, name, member.id)
         if not matched:
             continue
 
@@ -172,6 +177,7 @@ async def blacklist_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -
         f"Blacklist entries: {snapshot.entry_count}\n"
         f"Username entries: {len(snapshot.usernames)}\n"
         f"Display name entries: {len(snapshot.display_names)}\n"
+        f"Numeric ID entries: {len(snapshot.numeric_ids)}\n"
         f"Last updated: {last_updated}"
     )
 

@@ -18,19 +18,20 @@ Telegram グループへ参加したユーザーを Google スプレッドシー
 
 4. `blacklist` ワークシートの 1 行目を、必ず次のヘッダーにします。
 
-   | username | display_name | enabled | note |
-   | --- | --- | --- | --- |
-   | @example_user |  | TRUE | spam account |
-   |  | Example User | TRUE | trouble user |
+   | username | display_name | numeric_id | enabled | note |
+   | --- | --- | --- | --- | --- |
+   | @example_user |  |  | TRUE | spam account |
+   |  | Example User |  | TRUE | trouble user |
+   |  |  | 123456789 | TRUE | numeric ID match |
 
-   `enabled` が `TRUE` の行だけが有効です。username と display_name は OR 条件で、いずれかの完全一致で対象になります。
+   `enabled` が `TRUE` の行だけが有効です。username、display_name、numeric_id は OR 条件で、いずれかの完全一致で対象になります。numeric ID は Telegram の数値 ID です。旧形式（numeric_id 列なし）のブラックリストは、次回の読み込み時に同列を自動追加します。
 
    入室ログ用シートは Bot がグループごとに自動作成します。シート名は既定で `join_log_<chat_id>` となり、接頭辞は `google.join_log_worksheet_prefix` で変更できます。各自動作成シートの 1 行目は次のヘッダーです。
 
-   | username | display_name | joined_at |
-   | --- | --- | --- |
+   | username | display_name | numeric_id | joined_at |
+   | --- | --- | --- | --- |
 
-   自分自身を除く参加者ごとに、`@Gunlod` のような Telegram username、表示名、参加イベント時刻を UTC の ISO 8601 形式で追記します。username 未設定のユーザーは username 列を空欄にします。他 Bot も記録対象です。ログ用シートへの書き込みが失敗しても、ブラックリスト照合・BAN 処理は継続します。
+   自分自身を除く参加者ごとに、`@Gunlod` のような Telegram username、表示名、numeric ID、参加イベント時刻を UTC の ISO 8601 形式で追記します。username 未設定のユーザーは username 列を空欄にします。他 Bot も記録対象です。既存の 3 列ログシートは、次の書き込み時に numeric_id 列を自動追加します。ログ用シートへの書き込みが失敗しても、ブラックリスト照合・BAN 処理は継続します。
 
 5. Bot を対象グループの管理者にし、**ユーザーを禁止（BAN）する権限**を付与します。プライバシーモードを無効化すると、参加イベントを確実に受け取れます。
 

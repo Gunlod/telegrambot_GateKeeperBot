@@ -14,19 +14,21 @@ from .blacklist import SHEETS_SCOPE
 from .config import GoogleConfig
 
 LOGGER = logging.getLogger(__name__)
-JOIN_LOG_HEADERS = ["username", "display_name", "joined_at"]
+JOIN_LOG_HEADERS = ["username", "display_name", "numeric_id", "joined_at"]
+LEGACY_JOIN_LOG_HEADERS = ["username", "display_name", "joined_at"]
 
 
 @dataclass(frozen=True)
 class JoinLogEntry:
     username: str | None
     display_name: str
+    numeric_id: int
     joined_at: datetime
 
     def values(self) -> list[str]:
         # ISO 8601 in UTC is sortable and unambiguous when viewed in Sheets.
         timestamp = self.joined_at.astimezone(timezone.utc).isoformat(timespec="seconds")
-        return [self.username or "", self.display_name, timestamp]
+        return [self.username or "", self.display_name, str(self.numeric_id), timestamp]
 
 
 class JoinLogStore:
@@ -80,5 +82,22 @@ class JoinLogStore:
             worksheet = spreadsheet.add_worksheet(title=title, rows=1000, cols=len(JOIN_LOG_HEADERS))
             worksheet.append_row(JOIN_LOG_HEADERS, value_input_option="RAW")
             created = True
+        if not created:
+            self._migrate_headers_if_needed(worksheet, title)
         worksheet.append_rows(rows, value_input_option="RAW")
         return created
+
+    @staticmethod
+    def _migrate_headers_if_needed(worksheet: gspread.Worksheet, title: str) -> None:
+        headers = worksheet.row_values(1)
+        if headers == JOIN_LOG_HEADERS:
+            return
+        if headers == LEGACY_JOIN_LOG_HEADERS:
+            # Insert at C so legacy joined_at values move from C to D intact.
+            worksheet.insert_cols([["numeric_id"]], col=3, value_input_option="RAW")
+            LOGGER.info("JOIN LOG WORKSHEET MIGRATED worksheet=%s", title)
+            return
+        raise ValueError(
+            f"Worksheet '{title}' has unsupported headers {headers!r}; "
+            f"expected {JOIN_LOG_HEADERS!r}"
+        )

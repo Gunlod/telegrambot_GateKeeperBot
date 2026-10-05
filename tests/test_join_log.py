@@ -11,11 +11,12 @@ class JoinLogEntryTests(unittest.TestCase):
         entry = JoinLogEntry(
             username="@Gunlod",
             display_name="Example User",
+            numeric_id=123456,
             joined_at=datetime(2026, 9, 28, 12, 34, 56, tzinfo=timezone.utc),
         )
         self.assertEqual(
             entry.values(),
-            ["@Gunlod", "Example User", "2026-09-28T12:34:56+00:00"],
+            ["@Gunlod", "Example User", "123456", "2026-09-28T12:34:56+00:00"],
         )
 
     def test_worksheet_title_is_unique_per_group(self) -> None:

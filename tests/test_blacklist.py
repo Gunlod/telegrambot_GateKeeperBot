@@ -5,6 +5,7 @@ from gatekeeper.blacklist import (
     BlacklistStore,
     display_name,
     normalize_display_name,
+    normalize_numeric_id,
     normalize_username,
 )
 from gatekeeper.config import GoogleConfig
@@ -26,12 +27,17 @@ class BlacklistNormalizationTests(unittest.TestCase):
         store._snapshot = BlacklistSnapshot(
             usernames=frozenset({"exampleuser"}),
             display_names=frozenset({"yamada"}),
+            numeric_ids=frozenset({"123456"}),
             entry_count=2,
             last_updated=None,
         )
-        self.assertEqual(store.match("@EXAMPLEUSER", "Different"), "username")
-        self.assertEqual(store.match(None, "Yamada"), "display_name")
-        self.assertIsNone(store.match(None, "Taro Yamada"))
+        self.assertEqual(store.match("@EXAMPLEUSER", "Different", None), "username")
+        self.assertEqual(store.match(None, "Yamada", None), "display_name")
+        self.assertEqual(store.match(None, "Different", 123456), "numeric_id")
+        self.assertIsNone(store.match(None, "Taro Yamada", None))
+
+    def test_numeric_id_normalizes_leading_zeroes(self) -> None:
+        self.assertEqual(normalize_numeric_id(" 000123456 "), "123456")
 
 
 if __name__ == "__main__":
